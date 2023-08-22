@@ -1,0 +1,38 @@
+USE restaurants;
+
+CREATE OR REPLACE VIEW open_everyday AS 
+	SELECT restaurant_name, name_of_day, opening_hours, closing_hours
+	FROM restaurant 
+		JOIN hours_of_operation USING(restaurant_id)
+        	JOIN days USING(day_id)
+	WHERE opening_hours != "Closed" AND closing_hours != "Closed"
+	ORDER BY restaurant_name;
+
+CREATE OR REPLACE VIEW saturday_closing_time AS
+	SELECT restaurant_name, name_of_day, closing_hours
+	FROM restaurant
+		JOIN hours_of_operation USING(restaurant_id)
+        	JOIN days USING(day_id)
+	WHERE name_of_day IN
+		(SELECT name_of_day
+        	FROM days
+        	WHERE day_id = 7);
+	
+CREATE OR REPLACE VIEW price_avg AS
+	SELECT restaurant_name, CONCAT("$", ROUND(AVG(price),2)) AS average_price
+	FROM restaurant
+		JOIN menu_item USING(restaurant_id)
+	GROUP BY restaurant_name;
+    
+CREATE OR REPLACE VIEW under_5_items AS
+	SELECT restaurant_name, item_name, item_description, CONCAT("$", price) AS price
+	FROM restaurant
+		JOIN menu_item USING(restaurant_id)
+	WHERE price < 5 OR price = 5
+	ORDER BY restaurant_name;
+
+CREATE OR REPLACE VIEW least_most_expensive AS
+	SELECT restaurant_name, CONCAT("$", MIN(price)) AS least_expensive_item, CONCAT("$", 			MAX(price)) AS most_expensive_item
+	FROM restaurant JOIN menu_item USING(restaurant_id)
+	GROUP BY restaurant_name
+	ORDER BY least_expensive_item ASC 
